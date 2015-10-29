@@ -220,7 +220,7 @@ def interact(bot, db):
       remove_subscriber(chat_id, db)
       bot.sendMessage(chat_id=chat_id, text="Channel unsubscribed.")
     elif '/events' in message:
-      bot.sendMessage(chat_id=chat_id, text=get_events(), parse_mode='Markdown')
+      bot.sendMessage(chat_id=chat_id, text=get_events(), parse_mode='Markdown', disable_web_page_preview=True)
     elif message.lower().startswith('/norris'):
       parsed = message.split(' ')
       if len(parsed) >= 3:
