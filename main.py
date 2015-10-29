@@ -14,6 +14,8 @@ import telegram
 import pprint
 import json
 import sqlite3
+import random
+import tempfile
 
 config = configparser.ConfigParser()
 config.read('/usr/local/share/twitegram/twitegram.conf')
@@ -149,6 +151,32 @@ Details: {event_url}\n
   except requests.RequestException:
     return "Unable to fetch events at this time."  
 
+def get_random_photo(bot, chat_id):
+  try:
+    response = requests.get("https://api.meetup.com/2/photos?offset=0&format=json&group_urlname=novafurs&photo-host=public&page=20&fields=&order=time&desc=True&sig_id=9889908&sig=109f49acf1997e73db54708ce28927ca2b27f2c8")
+    if not response.ok:
+      bot.sendMessage(chat_id=chat_id, text='API call failed')
+      return
+      
+    photos = response.json()['results']
+    photo = random.choice(photos)
+    bot.sendChatAction(chat_id=chat_id, action=telegram.ChatAction.UPLOAD_PHOTO)
+    with tempfile.NamedTemporaryFile(suffix='.jpg') as photo_file:
+      response = requests.get(photo['photo_link'], stream=True)
+      if not response.ok:
+        bot.sendMessage(chat_id=chat_id, text='Unable to fetch image')
+        return
+      
+      for block in response.iter_content(1024):
+        photo_file.write(block)
+      
+      caption = "Here's a photo uploaded by {0}:\n{1}".format(photo['member']['name'], photo['site_link'])
+      bot.sendPhoto(chat_id=chat_id, photo=open(photo_file.name, 'rb'), caption=caption)
+
+  except requests.RequestException:
+    bot.sendMessage(chat_id=chat_id, text='API call failed. A team of highly trained foxes have been dispatched to fix the problem.')
+    return
+
 def interact(bot, db):
   global LAST_UPDATE_ID
 
@@ -185,6 +213,8 @@ def interact(bot, db):
       announce = get_join_announcement(chat_id, db)
       if announce is not None:
         bot.sendMessage(chat_id=chat_id, text=announce.format(**{'user' : 'TestUser'}), parse_mode='Markdown')
+    if message.startswith('/photo'):
+      get_random_photo(bot, chat_id)
 
     if message.startswith('/stop'):
       remove_subscriber(chat_id, db)
