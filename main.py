@@ -16,6 +16,7 @@ import json
 import sqlite3
 import random
 import tempfile
+import inflect  # I can't believe there's an entire library for this
 
 config = configparser.ConfigParser()
 config.read('/usr/local/share/twitegram/twitegram.conf')
@@ -134,13 +135,19 @@ def get_events():
   try:
     response = requests.get('https://api.meetup.com/2/events?offset=0&format=json&limited_events=False&group_urlname=novafurs&photo-host=public&page=20&fields=&order=time&desc=false&status=upcoming&sig_id=9889908&sig=a65a4cd6d6c3491425a1e7a29554b42b1f78a5b4')
     events = response.json()['results']
-    format_text = """{yes_rsvp_count} {group[who]} are going to _'{name}'_ on *{time_printable}*
+    format_text = """{yes_rsvp_count} {group[who]} going to _'{name}'_ on *{time_printable}*
 Details: {event_url}\n
 """
     message = ''
+    inflect_engine = inflect.engine()
 
     for event in events:
       if event['status'] == 'upcoming' and event['announced']:
+        # Convert RSVP member noun if needed:
+        if event['yes_rsvp_count'] == 1:
+          event['group']['who'] = "{0} is".format(inflect_engine.singular_noun(event['group']['who']))
+        else:
+          event['group']['who'] += " are"
         # Convert js dates (ms since epoch) to native datetimes:
         event['time_printable'] = datetime.datetime.fromtimestamp(int(event['time']/1000)).strftime("%A, %d %B at %H:%M")
         message += format_text.format(**event)
