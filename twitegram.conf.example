@@ -1,0 +1,16 @@
+[DEFAULT]
+[twitter]
+consumer_key = 
+consumer_secret = 
+access_token = 
+access_token_secret = 
+follow_users = ["2849282357"]
+
+[telegram]
+token = 
+
+[irc]
+enabled = False
+server = irc.furnet.org
+channel = #nova_furs
+nick = novafurs_bot
