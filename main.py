@@ -16,7 +16,7 @@ import json
 import sqlite3
 
 config = configparser.ConfigParser()
-config.read('twitegram.conf')
+config.read('/usr/local/share/twitegram/twitegram.conf')
 follow_users = json.loads(config['twitter']['follow_users'])
 
 LAST_UPDATE_ID = None
